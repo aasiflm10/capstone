@@ -7,9 +7,9 @@ const csv = require("csv-parser");
 const app = express();
 
 app.use(cors());
-
+app.use(express.json());
 app.get("/api/data", (req, res) => {
-  // Read the Excel file
+  // Read the Excel 
   const workbook = xlsx.readFile("updated_data.xlsx");
   const sheetName = workbook.SheetNames[0]; // First sheet
   const jsonData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
@@ -20,7 +20,7 @@ app.get("/api/data", (req, res) => {
 app.get("/api/csvdata", (req, res) => {
   const results = [];
 
-  fs.createReadStream("final_clean_data.csv")
+  fs.createReadStream("final_clean_data_final.csv")
     .pipe(csv())
     .on("data", (data) => results.push(data))
     .on("end", () => {
@@ -85,6 +85,42 @@ app.get('/api/get-phases', (req, res) => {
         .on('error', (error) => {
             res.status(500).json({ error: 'Error reading CSV file', details: error.message });
         });
+});
+
+app.post('/api/get-therapeutic-areas', (req, res) => {
+  const filePath = "final_clean_data_final.csv";
+
+  const { country } = req.body;
+
+  if (!country) {
+      return res.status(400).json({ error: 'Country is required in the request body' });
+  }
+
+  if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'CSV file not found' });
+  }
+
+  const results = [];
+  fs.createReadStream(filePath)
+      .pipe(csv())
+      .on('data', (row) => {
+          try {
+              const countriesList = JSON.parse(row.Countries.replace(/'/g, '"')); // Convert string to array
+              if (countriesList.map(c => c.trim()).includes(country)) {
+                  results.push(row["Therapeutic Area"]);
+              }
+          } catch (error) {
+              console.error("Error parsing row:", row);
+          }
+      })
+      .on('end', () => {
+          const uniqueTherapeuticAreas = [...new Set(results)];
+          res.json({ country, therapeuticAreas: uniqueTherapeuticAreas });
+      })
+      .on('error', (err) => {
+          console.error("Error reading CSV:", err);
+          res.status(500).json({ error: 'Internal server error' });
+      });
 });
 
 
