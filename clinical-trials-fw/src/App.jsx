@@ -1,25 +1,40 @@
 import { useState } from "react";
 import "./App.css";
-import ChartComponent from "./components/ChartComponent";
-import DataTable from "./components/DataTable";
-import DataTableWithCharts from "./components/DataTableWithCharts";
 import FilterComponent from "./components/Filters";
-import CountriesCountBar from "./components/graphs/Countries_Count_Bar";
-import PhasesCountBar from "./components/graphs/Phases_Count_Bar";
+import TherapeuticPieChart from "./components/graphs/Theraputic_Pie_Chart";
+import axios from "axios";
 
 function App() {
-  const [filters, setFilters] = useState({});
+  const [therapeuticAreas, setTherapeuticAreas] = useState([]);
+
+  const handleFilterSubmit = async (country) => {
+    try {
+      const response = await axios.post("http://localhost:5000/api/get-therapeutic-areas", {
+        country,
+      });
+  
+      setTherapeuticAreas(response.data.therapeuticAreas || []);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+  
 
   return (
     <div className="flex gap-8 p-6">
       {/* Filters Section */}
-      <FilterComponent onFilterChange={setFilters} />
+      <FilterComponent onSubmit={handleFilterSubmit} />
 
       {/* Data Section */}
       <div className="flex-1">
-        <h2 className="text-xl font-bold">Filtered Data</h2>
-        <pre>{JSON.stringify(filters, null, 2)}</pre>
-        <DataTableWithCharts/>
+        <h2 className="text-lg font-bold text-center mb-4">
+          Therapeutic Areas
+        </h2>
+        {therapeuticAreas.length > 0 ? (
+          <TherapeuticPieChart data={therapeuticAreas} />
+        ) : (
+          <p className="text-center text-gray-500">No data available</p>
+        )}
       </div>
     </div>
   );
