@@ -123,6 +123,40 @@ app.post('/api/get-therapeutic-areas', (req, res) => {
       });
 });
 
+app.post("/api/trials-by-therapeutic-area", (req, res) => {
+  const filePath = "final_clean_data_final.csv";
+  const { country } = req.body; // Get country from query params
+
+  if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: "CSV file not found" });
+  }
+
+  const trialCounts = {}; // Store counts of each therapeutic area
+
+  fs.createReadStream(filePath)
+      .pipe(csv())
+      .on("data", (row) => {
+          const therapeuticArea = row["Therapeutic Area"];
+          const countriesList = JSON.parse(row.Countries.replace(/'/g, '"')); // Convert string to array
+
+          if (therapeuticArea) {
+              if (!country || countriesList.map(c => c.trim()).includes(country)) {
+                  trialCounts[therapeuticArea] = (trialCounts[therapeuticArea] || 0) + 1;
+              }
+          }
+      })
+      .on("end", () => {
+          res.json({ country: country || "All Countries", trialCounts });
+      })
+      .on("error", (err) => {
+          console.error("Error reading CSV:", err);
+          res.status(500).json({ error: "Internal server error" });
+      });
+});
+
+
+
+
 
 
 app.listen(5000, () => {

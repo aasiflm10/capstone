@@ -2,6 +2,7 @@ import React, { useState } from "react";
 
 const FilterComponent = ({ onSubmit }) => {
   const [country, setCountry] = useState("");
+  const [therapeuticArea, setTherapeuticAreas] = useState("");
 
   return (
     <div className="flex flex-col gap-4 p-4 border rounded-lg shadow-md w-64">
@@ -14,9 +15,16 @@ const FilterComponent = ({ onSubmit }) => {
           value={country}
           onChange={(e) => setCountry(e.target.value)}
         />
+        <input
+          type="text"
+          placeholder="Therapeutic Area name"
+          className="rounded-md p-2 outline-2 w-full border"
+          value={therapeuticArea}
+          onChange={(e) => setTherapeuticAreas(e.target.value)}
+        />
         <div className="flex justify-center">
           <button
-            onClick={() => onSubmit(country)}
+            onClick={() => onSubmit(country, therapeuticArea)}
             className="rounded-md bg-blue-500 text-white p-2 w-full"
           >
             Send
