@@ -154,9 +154,54 @@ app.post("/api/trials-by-therapeutic-area", (req, res) => {
       });
 });
 
+app.post("/api/trials-by-country", (req, res) => {
+  const filePath = "final_clean_data_final.csv";
+  const { country } = req.body; // Get country from request body
 
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: "CSV file not found" });
+  }
 
+  const trialCounts = {}; // Object to store country-wise trial counts
 
+  fs.createReadStream(filePath)
+    .pipe(csv())
+    .on("data", (row) => {
+      try {
+        const countriesList = JSON.parse(row.Countries.replace(/'/g, '"')); // Convert string to array
+        countriesList.forEach((c) => {
+          const trimmedCountry = c.trim();
+          trialCounts[trimmedCountry] = (trialCounts[trimmedCountry] || 0) + 1;
+        });
+      } catch (error) {
+        console.error("Error parsing country data:", error);
+      }
+    })
+    .on("end", () => {
+      if (country) {
+        // If a specific country is requested, return only that country's count
+        return res.json({
+          country,
+          trialCounts: {
+            [country] : trialCounts[country] || 0
+          } // Default to 0 if no trials found
+        });
+      } else {
+        // If no specific country is requested, return the top 7 countries
+        const sortedCountries = Object.entries(trialCounts)
+          .sort((a, b) => b[1] - a[1]) // Sort in descending order
+          .slice(0, 7); // Get the top 7 countries
+
+        const topCountries = Object.fromEntries(sortedCountries);
+
+        return res.json({ trialCounts: topCountries });
+      }
+    })
+    .on("error", (err) => {
+      console.error("Error reading CSV:", err);
+      res.status(500).json({ error: "Internal server error" });
+    });
+});
 
 
 app.listen(5000, () => {

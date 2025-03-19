@@ -15,13 +15,7 @@ const FilterComponent = ({ onSubmit }) => {
           value={country}
           onChange={(e) => setCountry(e.target.value)}
         />
-        <input
-          type="text"
-          placeholder="Therapeutic Area name"
-          className="rounded-md p-2 outline-2 w-full border"
-          value={therapeuticArea}
-          onChange={(e) => setTherapeuticAreas(e.target.value)}
-        />
+        
         <div className="flex justify-center">
           <button
             onClick={() => onSubmit(country, therapeuticArea)}
